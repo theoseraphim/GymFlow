@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* Tailwind v4 — dark mode via classe `.dark` no elemento raiz */
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Design System — Roxo Morto */
+  --color-gymflow-bg: #2e2833;
+  --color-gymflow-bg-secondary: #3b3440;
+  --color-gymflow-bg-card: #3b3440;
+  --color-gymflow-bg-tertiary: #4a4450;
+  --color-gymflow-bg-input: #2a2230;
+  --color-gymflow-border: #4a4450;
+  --color-gymflow-accent: #9d8ba7;
+  --color-gymflow-accent-light: #b5a1bc;
+  --color-gymflow-chart-bg: #2e2833;
+  --color-gymflow-bar: #9d8ba7;
+
+  /* Light Mode */
+  --color-gymflow-light-bg: #f8f7fa;
+  --color-gymflow-light-bg-card: #ffffff;
+  --color-gymflow-light-bg-input: #ffffff;
+  --color-gymflow-light-border: #e5e7eb;
+  --color-gymflow-light-text: #1f2937;
+  --color-gymflow-light-text-muted: #6b7280;
+  --color-gymflow-light-chart-bg: #ffffff;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+/* Light (padrão sem .dark) */
+body {
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-gymflow-light-bg);
+  color: var(--color-gymflow-light-text);
+}
+
+/* Dark — fundo Roxo Morto, cards #3b3440 */
+html.dark body {
+  background-color: var(--color-gymflow-bg);
+  color: #e8e0ef;
+}
+
+#root {
+  min-height: 100vh;
+}
