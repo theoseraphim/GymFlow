@@ -48,7 +48,14 @@ describe('metrics', () => {
     fc.assert(
       fc.property(fc.array(arbitraryExercise(), { maxLength: 25 }), list => {
         const shuffled = [...list].sort(() => Math.random() - 0.5);
-        expect(calcularCargaTotal(list)).toBe(calcularCargaTotal(shuffled));
+        const original = calcularCargaTotal(list);
+        const reordered = calcularCargaTotal(shuffled);
+        // Soma de ponto flutuante não é associativa: reordenar pode gerar uma
+        // diferença mínima no último dígito significativo. A propriedade que
+        // importa é que a ordem não altera a carga de forma relevante, então
+        // comparamos com uma tolerância relativa em vez de igualdade exata.
+        const tolerance = Math.max(Math.abs(original), Math.abs(reordered)) * 1e-9;
+        expect(Math.abs(original - reordered)).toBeLessThanOrEqual(tolerance);
       }),
       { numRuns: 40 },
     );
