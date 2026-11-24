@@ -1,11 +1,10 @@
 // Supabase Edge Function: ai-insight
 // Recebe a lista de exercícios concluídos e devolve uma dica do "Gymenes".
-// A chave da Amazon Bedrock fica como SECRET no servidor (nunca exposta no browser).
+// A chave do OpenRouter fica como SECRET no servidor (nunca exposta no browser).
 //
-// Secrets esperados (configurados via `supabase secrets set`):
-//   AWS_BEARER_TOKEN_BEDROCK  -> chave de API do Amazon Bedrock (ABSK...)
-//   BEDROCK_REGION            -> ex.: us-east-1 (opcional, default us-east-1)
-//   BEDROCK_MODEL_ID          -> ex.: us.amazon.nova-lite-v1:0 (opcional)
+// Secrets esperados (configurados via `supabase secrets set` ou no painel):
+//   OPENROUTER_API_KEY  -> chave de API do OpenRouter (sk-or-...)
+//   OPENROUTER_MODEL    -> ex.: google/gemma-4-31b-it:free (opcional, default openrouter/free = escolhe um modelo gratuito)
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +17,8 @@ const SYSTEM_PROMPT =
   "Você é o Gymenes, coach de IA. Dê uma dica curta de 1 frase, analisando os " +
   "treinos. Identifique se a pessoa esqueceu de treinar algum grupo muscular ou " +
   "se a carga está leve. Seja motivador e objetivo.";
+
+const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 
 interface Exercise {
   title?: string;
@@ -32,16 +33,15 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "METHOD_NOT_ALLOWED" }, 405);
   }
 
-  const apiKey = Deno.env.get("AWS_BEARER_TOKEN_BEDROCK");
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
   if (!apiKey) {
-    console.error("Secret AWS_BEARER_TOKEN_BEDROCK não configurado.");
+    console.error("Secret OPENROUTER_API_KEY não configurado.");
     return jsonResponse({ error: "API_NOT_CONFIGURED" }, 500);
   }
 
-  const region = Deno.env.get("BEDROCK_REGION") ?? "us-east-1";
-  const modelId = Deno.env.get("BEDROCK_MODEL_ID") ?? "us.amazon.nova-lite-v1:0";
+  const model = Deno.env.get("OPENROUTER_MODEL") ?? "openrouter/free";
 
-  let exercises: Exercise[] = [];
+  let exercises: Exercise[];
   try {
     const body = await req.json();
     exercises = Array.isArray(body?.exercises) ? body.exercises : [];
@@ -60,44 +60,43 @@ Deno.serve(async (req: Request) => {
     .filter((t): t is string => Boolean(t))
     .join(", ");
 
-  const endpoint =
-    `https://bedrock-runtime.${region}.amazonaws.com/model/${
-      encodeURIComponent(modelId)
-    }/converse`;
-
   try {
-    const bedrockResp = await fetch(endpoint, {
+    const aiResp = await fetch(OPENROUTER_ENDPOINT, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        // Identificação opcional do app no painel do OpenRouter
+        "X-Title": "GymFlow",
       },
       body: JSON.stringify({
-        system: [{ text: SYSTEM_PROMPT }],
+        model,
         messages: [
-          { role: "user", content: [{ text: `Analise meu treino: ${titles}.` }] },
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: `Analise meu treino: ${titles}.` },
         ],
-        inferenceConfig: { maxTokens: 200, temperature: 0.7 },
+        max_tokens: 500,
+        temperature: 0.7,
       }),
     });
 
-    if (bedrockResp.status === 429) {
+    if (aiResp.status === 429) {
       return jsonResponse({ error: "API_LIMIT" }, 429);
     }
 
-    if (!bedrockResp.ok) {
-      const detail = await bedrockResp.text();
-      console.error("Erro Bedrock:", bedrockResp.status, detail);
+    if (!aiResp.ok) {
+      const detail = await aiResp.text();
+      console.error("Erro OpenRouter:", aiResp.status, detail);
       return jsonResponse({ error: "API_ERROR" }, 502);
     }
 
-    const data = await bedrockResp.json();
-    const insight = data?.output?.message?.content?.[0]?.text ??
+    const data = await aiResp.json();
+    const insight = data?.choices?.[0]?.message?.content?.trim() ||
       "Gymenes está meditando...";
 
     return jsonResponse({ insight });
   } catch (error) {
-    console.error("Falha ao chamar Bedrock:", error);
+    console.error("Falha ao chamar OpenRouter:", error);
     return jsonResponse({ error: "API_ERROR" }, 502);
   }
 });

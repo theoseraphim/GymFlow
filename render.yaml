@@ -2,7 +2,7 @@
 # Docs: https://render.com/docs/static-sites
 services:
   - type: web
-    name: gymflow
+    name: gymflow-challenge
     runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist

@@ -7,7 +7,7 @@ interface ExerciseLike {
 /**
  * Pede uma dica do "Gymenes" à Edge Function `ai-insight`.
  *
- * A chave da Amazon Bedrock NÃO fica no frontend — ela é um secret
+ * A chave do OpenRouter NÃO fica no frontend — ela é um secret
  * no Supabase e só a Edge Function tem acesso. O browser apenas envia
  * a lista de exercícios concluídos e recebe a dica pronta.
  */

@@ -5,7 +5,8 @@
 Organize exercícios em colunas ágeis (Backlog → Hoje → Fazendo → Feito), arraste cards para atualizar o status, acompanhe métricas no dashboard e receba insights de IA sobre seus treinos.
 
 > PoC - dataRain Consulting  
-> Desenvolvido por **Théo Henrique Oliveira Seraphim**
+> Desenvolvido por **Théo Henrique Oliveira Seraphim**  
+> 🔗 https://gymflow-challenge.onrender.com
 
 ---
 
@@ -18,7 +19,7 @@ Arquitetura moderna, escalável e orientada a dados.
 | Frontend | React 19 + Vite + TypeScript |
 | Estilo | Tailwind CSS v4 (Light Mode / Dark Mode) |
 | Backend | Supabase (Auth, PostgreSQL, Realtime, Edge Functions) |
-| IA | Amazon Bedrock via Supabase Edge Function — coach "Gymenes" |
+| IA | OpenRouter via Supabase Edge Function — coach "Gymenes" |
 | Deploy | [Render](https://render.com) Static Site |
 
 ---
@@ -48,7 +49,7 @@ Ferramentas e IAs integradas para acelerar o desenvolvimento e otimizar o produt
 | Cursor | AI-Powered Code Editor |
 | Gemini | Generative AI Agent |
 | [Supabase](https://supabase.com) | Database + Auth + Realtime + Edge Functions |
-| [Amazon Bedrock](https://aws.amazon.com/bedrock/) | LLM (agente Gymenes) |
+| [OpenRouter](https://openrouter.ai) | LLM (agente Gymenes) |
 | [GitHub](https://github.com) | Version Control & CI/CD |
 | [Render](https://render.com) | Cloud Hosting & Deployment |
 
@@ -56,9 +57,9 @@ Ferramentas e IAs integradas para acelerar o desenvolvimento e otimizar o produt
 
 ## Pré-requisitos
 
-- Node.js 20+
+- Node.js 26.13.1+ (veja `.nvmrc`)
 - Conta [Supabase](https://supabase.com)
-- Acesso ao [Amazon Bedrock](https://aws.amazon.com/bedrock/) (chave de API para o agente IA)
+- Chave de API do [OpenRouter](https://openrouter.ai/keys) (para o agente IA)
 - [Supabase CLI](https://supabase.com/docs/guides/cli) (para deploy da Edge Function)
 - Conta [Render](https://render.com) (para deploy)
 
@@ -67,8 +68,8 @@ Ferramentas e IAs integradas para acelerar o desenvolvimento e otimizar o produt
 ## Instalação local
 
 ```bash
-git clone <seu-repositorio>
-cd Gymflow
+git clone https://github.com/theoseraphim/gymflow-challenge.git
+cd gymflow-challenge
 npm install
 cp .env.example .env.local
 ```
@@ -80,7 +81,7 @@ VITE_SUPABASE_URL=https://<projeto>.supabase.co
 VITE_SUPABASE_ANON_KEY=<sua-chave-anon>
 ```
 
-> A chave da IA (Amazon Bedrock) **não** vai no `.env.local`. Ela é um secret
+> A chave da IA (OpenRouter) **não** vai no `.env.local`. Ela é um secret
 > no Supabase, usado apenas pela Edge Function. Veja a seção [Agente IA](#agente-ia-gymenes).
 
 Inicie o servidor de desenvolvimento:
@@ -89,19 +90,19 @@ Inicie o servidor de desenvolvimento:
 npm run dev
 ```
 
-Acesse `http://localhost:5173` → redireciona para `/board` após login.
+Acesse `http://localhost:3000` → redireciona para `/board` após login.
 
 ---
 
 ## Agente IA (Gymenes)
 
 O insight de IA é gerado por uma **Supabase Edge Function** (`ai-insight`) que chama
-o Amazon Bedrock. A chave da Bedrock fica como **secret no servidor** — nunca é
+o OpenRouter. A chave do OpenRouter fica como **secret no servidor** — nunca é
 exposta no frontend (importante, pois o build do Vite embute qualquer `VITE_*` no
 JavaScript público do navegador).
 
 ```
-Browser (GymFlow) → Edge Function ai-insight (guarda a chave) → Amazon Bedrock
+Browser (GymFlow) → Edge Function ai-insight (guarda a chave) → OpenRouter
 ```
 
 ### Deploy da função
@@ -111,11 +112,10 @@ Browser (GymFlow) → Edge Function ai-insight (guarda a chave) → Amazon Bedro
 supabase login
 supabase link --project-ref <seu-project-ref>
 
-# 2. Configure o secret com a chave do Bedrock
-supabase secrets set AWS_BEARER_TOKEN_BEDROCK="<sua-chave-bedrock>"
-# (opcional) região e modelo
-supabase secrets set BEDROCK_REGION="us-east-1"
-supabase secrets set BEDROCK_MODEL_ID="us.amazon.nova-lite-v1:0"
+# 2. Configure o secret com a chave do OpenRouter
+supabase secrets set OPENROUTER_API_KEY="<sua-chave-openrouter>"
+# (opcional) modelo — padrão: openrouter/free (roteia para um modelo gratuito)
+supabase secrets set OPENROUTER_MODEL="google/gemma-4-31b-it:free"
 
 # 3. Publique a função
 supabase functions deploy ai-insight
@@ -200,11 +200,11 @@ src/
 ├── hooks/        # useAuth, useExercises, useTheme, useDashboardMetrics
 ├── lib/          # supabase, serializer, metrics, validation, kanban
 ├── pages/        # AuthPage, DashboardPage (+ KanbanBoard como board)
-├── services/     # aiService (chama a Edge Function → Bedrock / Gymenes)
+├── services/     # aiService (chama a Edge Function → OpenRouter / Gymenes)
 └── test/         # Vitest + fast-check
 supabase/
 ├── migrations/        # SQL (tabela, RLS, realtime)
-└── functions/         # Edge Functions (ai-insight → Bedrock)
+└── functions/         # Edge Functions (ai-insight → OpenRouter)
 .kiro/specs/gymflow/   # requirements, design, tasks
 ```
 
