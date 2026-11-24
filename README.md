@@ -4,7 +4,7 @@
 
 Organize exercícios em colunas ágeis (Backlog → Hoje → Fazendo → Feito), arraste cards para atualizar o status, acompanhe métricas no dashboard e receba insights de IA sobre seus treinos.
 
-> PoC - dataRain Consulting  
+> Desafio Técnico (Technical Challenge) - dataRain Consulting  
 > Desenvolvido por **Théo Henrique Oliveira Seraphim**  
 > 🔗 https://gymflow-challenge.onrender.com
 
